@@ -665,6 +665,7 @@ select option{background:#111418;}
     <button class="nav-back" onclick="goHome()">← HOME</button>
     <span class="nav-title" style="color:var(--accent2);display:flex;align-items:center;gap:6px;"><img src="https://i.imgur.com/0dclajQ.png" style="width:22px;height:22px;object-fit:cover;border-radius:50%;"> 락뱃 갤러리</span>
     <span style="font-family:'Noto Sans KR',sans-serif;font-size:11px;color:var(--dim);margin-left:6px;">상황병 커뮤니티</span>
+    <button onclick="openGhSettings()" style="margin-left:auto;background:transparent;border:1px solid var(--border);border-radius:4px;color:var(--dim);font-size:11px;padding:3px 8px;cursor:pointer;">⚙️ GitHub</button>
     <span class="nav-clock" id="clock-gundori"></span>
   </div>
   <div class="gallery-layout" style="display:grid;grid-template-columns:460px 1fr 1fr;height:calc(100vh - 53px);gap:0;">
@@ -895,7 +896,7 @@ select option{background:#111418;}
       <div style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
           <div style="font-family:'Noto Sans KR',sans-serif;font-size:12px;color:var(--accent);letter-spacing:2px;">// 주간 식단표</div>
-          <label id="meal-upload-btn" style="font-family:'Noto Sans KR',sans-serif;font-size:10px;padding:3px 8px;background:rgba(0,200,255,.1);border:1px solid rgba(0,200,255,.3);border-radius:3px;color:var(--accent);cursor:pointer;">📷 업데이트</label>
+          <label id="meal-upload-btn" for="meal-file-input" style="font-family:'Noto Sans KR',sans-serif;font-size:10px;padding:3px 8px;background:rgba(0,200,255,.1);border:1px solid rgba(0,200,255,.3);border-radius:3px;color:var(--accent);cursor:pointer;">📷 업데이트</label>
           <input type="file" id="meal-file-input" accept="image/*" style="display:none;" onchange="mealUpload(this)">
         </div>
         <div id="meal-upload-status" style="display:none;font-family:'Noto Sans KR',sans-serif;font-size:10px;color:var(--gold);margin-bottom:6px;">⏳ 업로드 중...</div>
@@ -2358,7 +2359,23 @@ const FB_PATH = {
 };
 window._fbPath = FB_PATH;
 
-// Firebase 실시간 리스너
+// ── Firebase 공통 유틸 ────────────────────────────────
+const toArr = val => {
+  if(!val) return [];
+  if(Array.isArray(val)) return val;
+  if(typeof val === 'object') return Object.values(val);
+  return [];
+};
+const fixUpdates = arr => {
+  arr.forEach(e => {
+    if(e.updates && !Array.isArray(e.updates)) e.updates = Object.values(e.updates);
+    if(!e.updates) e.updates = [];
+  });
+  return arr;
+};
+// GitHub 주소 마이그레이션 (구 → 신)
+const fixGhUser = v => { if(v && v.user === 'taedraogn0112') v.user = 'taedragon0112'; return v; };
+
 function fbListen(key, callback){
   _fbDB.ref(FB_PATH[key]).on('value', snap => {
     const val = snap.val();
@@ -2367,21 +2384,8 @@ function fbListen(key, callback){
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const toArr = val => {
-    if(!val) return [];
-    if(Array.isArray(val)) return val;
-    if(typeof val === 'object') return Object.values(val);
-    return [];
-  };
-  const fixUpdates = arr => {
-    arr.forEach(e => {
-      if(e.updates && !Array.isArray(e.updates)) e.updates = Object.values(e.updates);
-      if(!e.updates) e.updates = [];
-    });
-    return arr;
-  };
 
-  // 초기 1회 로드 (once) — 실시간 동기화 대신 앱 시작 시 한 번만 Firebase 값으로 채움
+  // ── 로그 (1회 로드) ────────────────────────────────
   _fbDB.ref('gosangpa/logs').once('value', snap => {
     const val = snap.val();
     if(val !== null && typeof logs !== 'undefined'){
@@ -2391,6 +2395,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if(typeof dashInited!=='undefined'&&dashInited) dashRefresh();
     }
   });
+
+  // ── 아카이브 (1회 로드) ───────────────────────────
   _fbDB.ref('gosangpa/srArchive').once('value', snap => {
     const val = snap.val();
     if(val !== null && typeof srArchive !== 'undefined'){
@@ -2403,6 +2409,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if(typeof srRenderCal==='function'){srRenderCal();srRenderArchiveSummary();}
     }
   });
+
+  // ── 커뮤니티 (실시간) ─────────────────────────────
   _fbDB.ref('gosangpa/commPosts').on('value', snap => {
     const val = snap.val();
     if(val !== null && typeof commPosts !== 'undefined'){
@@ -2415,6 +2423,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if(typeof renderCommList==='function') renderCommList();
     }
   });
+
+  // ── 출동 (1회 로드) ───────────────────────────────
   _fbDB.ref('gosangpa/dispatches').once('value', snap => {
     const val = snap.val();
     if(val !== null && typeof dpDispatches !== 'undefined'){
@@ -2422,6 +2432,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if(typeof dpRenderList==='function'){dpRenderList();dpRenderCal();}
     }
   });
+
+  // ── 당직체크리스트 (실시간) ───────────────────────
   _fbDB.ref('gosangpa/hwItems').on('value', snap => {
     const val = snap.val();
     if(val !== null && typeof hwItems !== 'undefined'){
@@ -2429,13 +2441,33 @@ document.addEventListener('DOMContentLoaded', () => {
       if(typeof hwRenderItems==='function'){hwRenderItems();hwRenderNotices();}
     }
   });
-  // GitHub 설정 실시간 동기화
+
+  // ── GitHub 설정 (실시간 + 마이그레이션) ──────────
   _fbDB.ref('gosangpa/ghSettings').on('value', snap => {
-    const val = snap.val();
+    const val = fixGhUser(snap.val());
     if(val && val.token){
       ghSettings = val;
+      // 구 주소가 Firebase에 남아있으면 새 주소로 덮어쓰기
+      if(snap.val()&&snap.val().user==='taedraogn0112'){
+        _fbDB.ref('gosangpa/ghSettings/user').set('taedragon0112');
+      }
       try{localStorage.setItem('락뱃_ghSettings', JSON.stringify(val));}catch(e){}
       if(typeof updateGhStatusLabel==='function') updateGhStatusLabel();
+    }
+  });
+
+  // ── 식단표 이미지 (실시간) ────────────────────────
+  _fbDB.ref('gosangpa/mealImg').on('value', snap => {
+    const url = snap.val();
+    const img = document.getElementById('meal-img');
+    const ph  = document.getElementById('meal-placeholder');
+    if(url && img){
+      img.src = url;
+      img.style.display = 'block';
+      if(ph) ph.style.display = 'none';
+    } else {
+      if(img) img.style.display = 'none';
+      if(ph) ph.style.display = 'block';
     }
   });
 });
@@ -4354,18 +4386,7 @@ function showZoom(){
 }
 function zoomNav(dir){zoomIdx=(zoomIdx+dir+zoomImages.length)%zoomImages.length;showZoom();}
 function closeImgZoom(){document.getElementById('img-zoom-modal').style.display='none';}
-// ── 식단표 Firebase 연동 ─────────────────────────────
-function mealLoadImg(){
-  if(!window._fbDb)return;
-  window._fbDb.ref('gosangpa/mealImg').on('value',snap=>{
-    const url=snap.val();
-    const img=document.getElementById('meal-img');
-    const ph=document.getElementById('meal-placeholder');
-    if(url&&img){img.src=url;img.style.display='block';if(ph)ph.style.display='none';}
-    else{if(img)img.style.display='none';if(ph)ph.style.display='block';}
-  });
-}
-
+// ── 식단표 Firebase 연동 (DOMContentLoaded에서 처리) ─
 async function mealUpload(input){
   const file=input.files[0];
   if(!file)return;
