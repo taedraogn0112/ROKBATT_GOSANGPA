@@ -893,12 +893,18 @@ select option{background:#111418;}
     <div style="overflow-y:auto;padding:12px;">
       <!-- 식단표 이미지 -->
       <div style="margin-bottom:16px;">
-        <div style="font-family:'Noto Sans KR',sans-serif;font-size:12px;color:var(--accent);letter-spacing:2px;margin-bottom:8px;">// 주간 식단표</div>
-        <img src="https://i.imgur.com/6e08da29-7935-43af-8c8c-aea0323bea38.jpeg"
-          style="width:100%;border-radius:4px;border:1px solid var(--border);cursor:zoom-in;transition:opacity .15s;"
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div style="font-family:'Noto Sans KR',sans-serif;font-size:12px;color:var(--accent);letter-spacing:2px;">// 주간 식단표</div>
+          <label id="meal-upload-btn" style="font-family:'Noto Sans KR',sans-serif;font-size:10px;padding:3px 8px;background:rgba(0,200,255,.1);border:1px solid rgba(0,200,255,.3);border-radius:3px;color:var(--accent);cursor:pointer;">📷 업데이트</label>
+          <input type="file" id="meal-file-input" accept="image/*" style="display:none;" onchange="mealUpload(this)">
+        </div>
+        <div id="meal-upload-status" style="display:none;font-family:'Noto Sans KR',sans-serif;font-size:10px;color:var(--gold);margin-bottom:6px;">⏳ 업로드 중...</div>
+        <img id="meal-img" src=""
+          style="width:100%;border-radius:4px;border:1px solid var(--border);cursor:zoom-in;transition:opacity .15s;display:none;"
           onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'"
           onclick="openMealZoom(this.src)"
           alt="주간 식단표">
+        <div id="meal-placeholder" style="width:100%;padding:40px 0;text-align:center;border:1px dashed var(--border);border-radius:4px;color:var(--dim);font-family:'Noto Sans KR',sans-serif;font-size:12px;">📷 식단표 이미지 없음<br><span style="font-size:10px;">업데이트 버튼으로 등록하세요</span></div>
       </div>
       <!-- 근무표 (공사중) -->
       <div class="construction" style="min-height:30vh;">
@@ -3106,7 +3112,7 @@ function updateClock(){const n=ltNow(),h=String(n.getUTCHours()).padStart(2,'0')
 setInterval(updateClock,1000);updateClock();
 
 // ─── NAV ───────────────────────────────────────────
-function openPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);const box=document.getElementById('home-clock-box');if(box)box.style.display=(id==='home')?'block':'none';const vb=document.querySelector('.version-btn');if(vb)vb.style.display=(id==='home')?'flex':'none';const mtw=document.getElementById('market-ticker-wrap');if(mtw)mtw.style.display=(id==='home')?'block':'none';const fab=document.getElementById('utm-fab');if(fab)fab.style.display=(id==='page-sitrep')?'flex':'none';const ffab=document.getElementById('faq-fab');if(ffab)ffab.style.display=(id==='page-sitrep'||id==='home')?'flex':'none';const tfab=document.getElementById('translate-fab');if(tfab)tfab.style.display=(id==='page-sitrep'||id==='home')?'flex':'none';if(id==='page-dispatch')dpInit();if(id==='page-checklist'){hwInit();}if(id==='page-dashboard'){dashInit();}if(id==='page-sitrep'){if(!srCalInited){srInitCal();srLastArchiveDate=srTodayKey();setInterval(srCheckMidnight,60000);srCalInited=true;}else{srRenderCal();srRenderArchiveSummary();}}}
+function openPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById(id).classList.add('active');window.scrollTo(0,0);const box=document.getElementById('home-clock-box');if(box)box.style.display=(id==='home')?'block':'none';const vb=document.querySelector('.version-btn');if(vb)vb.style.display=(id==='home')?'flex':'none';const mtw=document.getElementById('market-ticker-wrap');if(mtw)mtw.style.display=(id==='home')?'block':'none';const fab=document.getElementById('utm-fab');if(fab)fab.style.display=(id==='page-sitrep')?'flex':'none';const ffab=document.getElementById('faq-fab');if(ffab)ffab.style.display=(id==='page-sitrep'||id==='home')?'flex':'none';const tfab=document.getElementById('translate-fab');if(tfab)tfab.style.display=(id==='page-sitrep'||id==='home')?'flex':'none';if(id==='page-dispatch')dpInit();if(id==='page-checklist'){hwInit();}if(id==='page-dashboard'){dashInit();}if(id==='page-gundori'){mealLoadImg();}if(id==='page-sitrep'){if(!srCalInited){srInitCal();srLastArchiveDate=srTodayKey();setInterval(srCheckMidnight,60000);srCalInited=true;}else{srRenderCal();srRenderArchiveSummary();}}}
 function openUtmModal(){document.getElementById('utm-modal-overlay').classList.add('active');document.getElementById('utm-modal-search').value='';filterUtmModal();}
 function closeUtmModal(e){if(!e||e.target===document.getElementById('utm-modal-overlay')||e.currentTarget===document.getElementById('utm-modal-close'))document.getElementById('utm-modal-overlay').classList.remove('active');}
 function filterUtmModal(){const q=document.getElementById('utm-modal-search').value.toLowerCase();document.querySelectorAll('#utm-modal-body .utm-table tbody tr').forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q)?'':'none';});}
@@ -4341,6 +4347,40 @@ function showZoom(){
 }
 function zoomNav(dir){zoomIdx=(zoomIdx+dir+zoomImages.length)%zoomImages.length;showZoom();}
 function closeImgZoom(){document.getElementById('img-zoom-modal').style.display='none';}
+// ── 식단표 Firebase 연동 ─────────────────────────────
+function mealLoadImg(){
+  if(!window._fbDb)return;
+  window._fbDb.ref('gosangpa/mealImg').on('value',snap=>{
+    const url=snap.val();
+    const img=document.getElementById('meal-img');
+    const ph=document.getElementById('meal-placeholder');
+    if(url&&img){img.src=url;img.style.display='block';if(ph)ph.style.display='none';}
+    else{if(img)img.style.display='none';if(ph)ph.style.display='block';}
+  });
+}
+
+async function mealUpload(input){
+  const file=input.files[0];
+  if(!file)return;
+  if(!ghReady()){showCustomModal({icon:'⚠️',title:'// GitHub 미연결',msg:'갤러리 설정에서 GitHub 토큰을 먼저 설정해주세요.',okText:'확인'});return;}
+  const statusEl=document.getElementById('meal-upload-status');
+  if(statusEl){statusEl.style.display='block';statusEl.textContent='⏳ 업로드 중...';}
+  try{
+    const url=await ghUploadImage(file);
+    if(url){
+      const img=document.getElementById('meal-img');
+      const ph=document.getElementById('meal-placeholder');
+      if(img){img.src=url;img.style.display='block';}
+      if(ph)ph.style.display='none';
+      if(window._fbDb) window._fbDb.ref('gosangpa/mealImg').set(url);
+      if(statusEl){statusEl.textContent='✅ 업로드 완료';setTimeout(()=>statusEl.style.display='none',2000);}
+    }
+  }catch(e){
+    if(statusEl){statusEl.textContent='❌ 업로드 실패: '+e.message;setTimeout(()=>statusEl.style.display='none',3000);}
+  }
+  input.value='';
+}
+
 function openMealZoom(src){
   const modal=document.getElementById('img-zoom-modal');
   const img=document.getElementById('img-zoom-src');
