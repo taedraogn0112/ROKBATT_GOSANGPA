@@ -4132,11 +4132,18 @@ updateHomeClocks();
 // ─── 이미지 첨부 ──────────────────────────────────
 // ─── GitHub 이미지 업로드 설정 ───────────────────────
 const GH_LS = '락뱃_ghSettings';
-let ghSettings = {user:'taedraogn0112',repo:'ROKBATT_GOSANGPA',branch:'main',token:''};
+let ghSettings = {user:'taedragon0112',repo:'ROKBATT_GOSANGPA',branch:'main',token:''};
 
 function ghLoadSettings(){
   // 로컬스토리지 먼저 확인
-  try{ const r=localStorage.getItem(GH_LS); if(r){ const v=JSON.parse(r); if(v.token){ghSettings=v;updateGhStatusLabel();return;} } }catch(e){}
+  try{
+    const r=localStorage.getItem(GH_LS);
+    if(r){
+      const v=JSON.parse(r);
+      if(v.user==='taedraogn0112') v.user='taedragon0112'; // 구 주소 자동 마이그레이션
+      if(v.token){ghSettings=v;updateGhStatusLabel();return;}
+    }
+  }catch(e){}
   // Firebase에서 로드
   const tryFb=()=>{
     if(window._fbReady && window._fbDb){
