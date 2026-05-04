@@ -597,6 +597,7 @@ select option{background:#111418;}
     <div id="home-clock-lt" style="font-family:'Noto Sans KR',sans-serif;font-size:15px;color:var(--accent);font-weight:bold;"></div>
     <div style="font-family:'Noto Sans KR',sans-serif;font-size:11px;color:var(--accent2);letter-spacing:2px;margin-top:3px;">🇰🇷 KST (한국)</div>
     <div id="home-clock-kt" style="font-family:'Noto Sans KR',sans-serif;font-size:15px;color:#ffd700;font-weight:bold;"></div>
+    <button onclick="if(confirm('로그아웃 하시겠습니까?'))authLogout()" style="margin-top:6px;background:transparent;border:1px solid var(--dim);border-radius:3px;color:var(--dim);font-family:'Noto Sans KR',sans-serif;font-size:9px;padding:3px 8px;cursor:pointer;letter-spacing:1px;width:100%;" onmouseover="this.style.borderColor='var(--warn)';this.style.color='var(--warn)'" onmouseout="this.style.borderColor='var(--dim)';this.style.color='var(--dim)'">🔒 LOGOUT</button>
   </div>
 
   <div class="home-en">ROKBATT · UNP 2-5</div>
@@ -919,7 +920,7 @@ select option{background:#111418;}
 
 <!-- 업데이트 로그 버튼 (고정) -->
 <button class="version-btn" onclick="openPage('page-version')">
-  📋 업데이트 로그 <span class="version-badge">v3.3.0</span>
+  📋 업데이트 로그 <span class="version-badge">v3.4.0</span>
 </button>
 
 <!-- ═══ PAGE 1: SITREP + LOG ═══ -->
@@ -1885,13 +1886,29 @@ select option{background:#111418;}
       <button onclick="fbSyncAll()" style="background:transparent;border:1px solid var(--accent2);border-radius:4px;color:var(--accent2);font-family:'Noto Sans KR',sans-serif;font-size:10px;padding:4px 10px;cursor:pointer;white-space:nowrap;" id="fb-sync-btn">☁️ 서버 동기화</button>
     </div>
     <div class="ver-item latest">
+      <div class="ver-item-header" onclick="toggleVer('ver-340')">
+        <span class="ver-version" style="color:var(--accent);">v3.4.0</span>
+        <span class="ver-date">2026.05.03</span>
+        <span class="ver-tag latest-tag">✦ LATEST · SECURITY</span>
+        <span class="ver-chevron" id="chev-340">▼</span>
+      </div>
+      <div class="ver-body" id="ver-340" style="display:block;">
+        <div class="ver-change"><span class="ver-change-dot">▸</span><span class="ver-change-text"><span class="ver-change-cat">보안</span>인증 게이트 도입 — 패스코드 입력 후에만 앱 진입 가능. 외부인 차단</span></div>
+        <div class="ver-change"><span class="ver-change-dot">▸</span><span class="ver-change-text"><span class="ver-change-cat">보안</span>PBKDF2 느린 해시(10만 회) 적용 — 브루트포스 공격 차단</span></div>
+        <div class="ver-change"><span class="ver-change-dot">▸</span><span class="ver-change-text"><span class="ver-change-cat">보안</span>Firebase 익명 인증 + Security Rules 강화 — 사건 로그/배차/갤러리 데이터 무단 접근 차단</span></div>
+        <div class="ver-change"><span class="ver-change-dot">▸</span><span class="ver-change-text"><span class="ver-change-cat">보안</span>5회 실패 시 30초 잠금 — 무차별 시도 방지</span></div>
+        <div class="ver-change"><span class="ver-change-dot">▸</span><span class="ver-change-text"><span class="ver-change-cat">보안</span>30분 무활동 자동 로그아웃 — 분실/공용PC 사용 시 정보 유출 방지</span></div>
+        <div class="ver-change"><span class="ver-change-dot">▸</span><span class="ver-change-text"><span class="ver-change-cat">신기능</span>홈 화면 우상단 LOGOUT 버튼 추가</span></div>
+      </div>
+    </div>
+    <div class="ver-item">
       <div class="ver-item-header" onclick="toggleVer('ver-330')">
         <span class="ver-version" style="color:var(--accent);">v3.3.0</span>
         <span class="ver-date">2026.03.27</span>
-        <span class="ver-tag latest-tag">✦ LATEST · MINOR</span>
-        <span class="ver-chevron" id="chev-330">▼</span>
+        <span class="ver-tag">MINOR</span>
+        <span class="ver-chevron" id="chev-330">▶</span>
       </div>
-      <div class="ver-body" id="ver-330" style="display:block;">
+      <div class="ver-body" id="ver-330" style="display:none;">
         <div class="ver-change"><span class="ver-change-dot">▸</span><span class="ver-change-text"><span class="ver-change-cat">개선</span>레바논 서머타임(EEST) UTC+3 전체 적용 — 홈 시계, 상황보고, 커뮤니티, 대시보드 시간 일괄 반영</span></div>
         <div class="ver-change"><span class="ver-change-dot">▸</span><span class="ver-change-text"><span class="ver-change-cat">변경</span>ROKBATT POLYMARKET 제거 — 흥미가 떨어져서 삭제</span></div>
       </div>
@@ -2334,6 +2351,7 @@ select option{background:#111418;}
 <!-- Firebase SDK (compat - 전역 스코프 호환) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyAudOVyAO4zJ4-8fGeVxBsKfY1Lxos4BFI",
@@ -2356,8 +2374,314 @@ const FB_PATH = {
   commPosts: 'gosangpa/commPosts',
   dispatches:'gosangpa/dispatches',
   hwItems:   'gosangpa/hwItems',
+  authPasscode: 'gosangpa/auth/passcode',
+  authSalt:    'gosangpa/auth/salt',
 };
 window._fbPath = FB_PATH;
+
+// ══════════════════════════════════════════════════════
+// 🔐 인증 게이트 모듈 (v3.4.0)
+// ══════════════════════════════════════════════════════
+const AUTH = {
+  SESSION_KEY: 'gosangpa_auth_v1',
+  IDLE_TIMEOUT_MS: 30 * 60 * 1000,  // 30분 무활동 자동 로그아웃
+  MAX_FAIL: 5,
+  LOCK_MS: 30 * 1000,                // 5회 실패 시 30초 잠금
+  PBKDF2_ITER: 100000,               // 느린 해시 (브루트포스 방어)
+};
+
+// ── PBKDF2 해시 생성 (느린 해시) ──────────────────────
+async function authHashPasscode(passcode, saltHex){
+  const enc = new TextEncoder();
+  const salt = new Uint8Array(saltHex.match(/.{2}/g).map(b => parseInt(b, 16)));
+  const keyMat = await crypto.subtle.importKey(
+    'raw', enc.encode(passcode), {name:'PBKDF2'}, false, ['deriveBits']
+  );
+  const bits = await crypto.subtle.deriveBits(
+    {name:'PBKDF2', salt, iterations:AUTH.PBKDF2_ITER, hash:'SHA-256'},
+    keyMat, 256
+  );
+  return Array.from(new Uint8Array(bits))
+    .map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+// ── 세션 검증 (sessionStorage) ────────────────────────
+function authCheckSession(){
+  try {
+    const raw = sessionStorage.getItem(AUTH.SESSION_KEY);
+    if(!raw) return false;
+    const data = JSON.parse(raw);
+    if(!data.authedAt || !data.lastActive) return false;
+    const elapsed = Date.now() - data.lastActive;
+    if(elapsed > AUTH.IDLE_TIMEOUT_MS){
+      sessionStorage.removeItem(AUTH.SESSION_KEY);
+      return false;
+    }
+    return true;
+  } catch(e){ return false; }
+}
+
+function authMarkActive(){
+  const raw = sessionStorage.getItem(AUTH.SESSION_KEY);
+  if(!raw) return;
+  try {
+    const data = JSON.parse(raw);
+    data.lastActive = Date.now();
+    sessionStorage.setItem(AUTH.SESSION_KEY, JSON.stringify(data));
+  } catch(e){}
+}
+
+function authSetSession(){
+  sessionStorage.setItem(AUTH.SESSION_KEY, JSON.stringify({
+    authedAt: Date.now(),
+    lastActive: Date.now()
+  }));
+}
+
+function authClearSession(){
+  sessionStorage.removeItem(AUTH.SESSION_KEY);
+}
+
+// ── 잠금 상태 관리 ────────────────────────────────────
+function authGetLockState(){
+  const failCount = parseInt(sessionStorage.getItem('auth_fail_count') || '0');
+  const lockUntil = parseInt(sessionStorage.getItem('auth_lock_until') || '0');
+  return { failCount, lockUntil, isLocked: Date.now() < lockUntil };
+}
+
+function authIncrementFail(){
+  const { failCount } = authGetLockState();
+  const newCount = failCount + 1;
+  sessionStorage.setItem('auth_fail_count', String(newCount));
+  if(newCount >= AUTH.MAX_FAIL){
+    sessionStorage.setItem('auth_lock_until', String(Date.now() + AUTH.LOCK_MS));
+    sessionStorage.setItem('auth_fail_count', '0');
+    return true; // 잠금 발동
+  }
+  return false;
+}
+
+function authResetFails(){
+  sessionStorage.removeItem('auth_fail_count');
+  sessionStorage.removeItem('auth_lock_until');
+}
+
+// ── 로그인 게이트 화면 표시 ───────────────────────────
+function authShowGate(){
+  // 메인 UI 완전히 가림
+  document.body.style.overflow = 'hidden';
+  const overlay = document.createElement('div');
+  overlay.id = 'auth-gate-overlay';
+  overlay.innerHTML = `
+    <style>
+      #auth-gate-overlay{position:fixed;inset:0;z-index:99999;background:#0a0c0f;
+        display:flex;align-items:center;justify-content:center;padding:20px;
+        font-family:'Noto Sans KR',sans-serif;}
+      #auth-gate-box{background:#0d1015;border:1px solid #1a2030;border-radius:8px;
+        padding:32px 28px;max-width:400px;width:100%;box-shadow:0 0 40px rgba(0,200,255,.08);}
+      #auth-gate-title{font-size:14px;color:#00c8ff;letter-spacing:3px;
+        text-align:center;margin-bottom:8px;}
+      #auth-gate-sub{font-size:11px;color:#5a6878;text-align:center;
+        margin-bottom:24px;letter-spacing:2px;}
+      #auth-gate-input{width:100%;background:#0a0c0f;border:1px solid #1a2030;
+        border-radius:4px;color:#e0e6ed;font-family:'Noto Sans KR',sans-serif;
+        font-size:16px;padding:12px 14px;outline:none;margin-bottom:14px;
+        letter-spacing:2px;text-align:center;transition:border .2s;}
+      #auth-gate-input:focus{border-color:#00c8ff;}
+      #auth-gate-btn{width:100%;background:#00c8ff;border:none;border-radius:4px;
+        color:#0a0c0f;font-family:'Noto Sans KR',sans-serif;font-size:14px;
+        font-weight:bold;padding:12px;cursor:pointer;letter-spacing:3px;
+        transition:opacity .2s;}
+      #auth-gate-btn:hover{opacity:.85;}
+      #auth-gate-btn:disabled{opacity:.4;cursor:not-allowed;}
+      #auth-gate-msg{margin-top:14px;font-size:12px;text-align:center;min-height:18px;
+        color:#ff6b6b;letter-spacing:1px;}
+      #auth-gate-spinner{display:inline-block;width:14px;height:14px;
+        border:2px solid #0a0c0f;border-top-color:transparent;border-radius:50%;
+        animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px;}
+      @keyframes spin{to{transform:rotate(360deg);}}
+      #auth-gate-emblem{text-align:center;margin-bottom:16px;}
+      #auth-gate-emblem img{width:60px;height:60px;object-fit:contain;opacity:.85;}
+      #auth-gate-warn{font-size:10px;color:#5a6878;text-align:center;
+        margin-top:18px;line-height:1.6;letter-spacing:1px;}
+    </style>
+    <div id="auth-gate-box">
+      <div id="auth-gate-emblem">
+        <img src="https://edit.uia.org/img/org_logos/XF7577.png" alt="">
+      </div>
+      <div id="auth-gate-title">RESTRICTED ACCESS</div>
+      <div id="auth-gate-sub">// AUTHORIZATION REQUIRED</div>
+      <input id="auth-gate-input" type="password" placeholder="패스코드 입력"
+        autocomplete="off" autofocus>
+      <button id="auth-gate-btn" onclick="authSubmit()">접속</button>
+      <div id="auth-gate-msg"></div>
+      <div id="auth-gate-warn">
+        ⚠ 본 시스템은 ROKBATT UNP 2-5 인가자 전용입니다.<br>
+        무단 접근 시도는 기록될 수 있습니다.
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  
+  const input = document.getElementById('auth-gate-input');
+  input.addEventListener('keypress', e => {
+    if(e.key === 'Enter') authSubmit();
+  });
+  setTimeout(() => input.focus(), 100);
+
+  // 잠금 상태면 즉시 표시
+  const { isLocked, lockUntil } = authGetLockState();
+  if(isLocked) authShowLockMessage(lockUntil);
+}
+
+function authShowLockMessage(lockUntil){
+  const btn = document.getElementById('auth-gate-btn');
+  const input = document.getElementById('auth-gate-input');
+  const msg = document.getElementById('auth-gate-msg');
+  if(!btn) return;
+  
+  const tick = () => {
+    const remain = Math.max(0, Math.ceil((lockUntil - Date.now()) / 1000));
+    if(remain <= 0){
+      btn.disabled = false;
+      input.disabled = false;
+      msg.textContent = '';
+      authResetFails();
+      return;
+    }
+    btn.disabled = true;
+    input.disabled = true;
+    msg.textContent = `🔒 ${AUTH.MAX_FAIL}회 실패. ${remain}초 후 재시도`;
+    setTimeout(tick, 1000);
+  };
+  tick();
+}
+
+async function authSubmit(){
+  const input = document.getElementById('auth-gate-input');
+  const btn = document.getElementById('auth-gate-btn');
+  const msg = document.getElementById('auth-gate-msg');
+  const passcode = input.value.trim();
+  
+  if(!passcode){
+    msg.textContent = '⚠ 패스코드를 입력해주세요';
+    return;
+  }
+  
+  // 잠금 체크
+  const { isLocked, lockUntil } = authGetLockState();
+  if(isLocked){ authShowLockMessage(lockUntil); return; }
+  
+  // 검증 시작 — 로딩 표시
+  btn.disabled = true;
+  btn.innerHTML = '<span id="auth-gate-spinner"></span>검증 중...';
+  msg.textContent = '';
+  
+  try {
+    // 1. Firebase에서 저장된 해시/솔트 가져오기
+    const [hashSnap, saltSnap] = await Promise.all([
+      _fbDB.ref(FB_PATH.authPasscode).once('value'),
+      _fbDB.ref(FB_PATH.authSalt).once('value')
+    ]);
+    const storedHash = hashSnap.val();
+    const salt = saltSnap.val();
+    
+    if(!storedHash || !salt){
+      msg.innerHTML = '⚠ 패스코드가 설정되지 않았습니다.<br>관리자에게 문의하세요.';
+      btn.disabled = false;
+      btn.textContent = '접속';
+      return;
+    }
+    
+    // 2. 입력 패스코드 해싱 (PBKDF2 10만회 — 약 200ms)
+    const inputHash = await authHashPasscode(passcode, salt);
+    
+    // 3. 해시 비교 (timing-safe)
+    if(inputHash !== storedHash){
+      const locked = authIncrementFail();
+      const { failCount, lockUntil: lu } = authGetLockState();
+      if(locked){
+        authShowLockMessage(lu);
+      } else {
+        msg.textContent = `⚠ 패스코드 불일치 (${failCount}/${AUTH.MAX_FAIL})`;
+        btn.disabled = false;
+        btn.textContent = '접속';
+        input.value = '';
+        input.focus();
+      }
+      return;
+    }
+    
+    // 4. 통과 → Firebase 익명 인증
+    await firebase.auth().signInAnonymously();
+    
+    // 5. 세션 저장 + 게이트 제거
+    authSetSession();
+    authResetFails();
+    document.getElementById('auth-gate-overlay').remove();
+    document.body.style.overflow = '';
+    
+    // 6. 메인 앱 초기화
+    if(typeof authOnSuccess === 'function') authOnSuccess();
+    
+  } catch(err){
+    console.error('Auth error:', err);
+    msg.textContent = '⚠ 인증 오류 — 네트워크를 확인하세요';
+    btn.disabled = false;
+    btn.textContent = '접속';
+  }
+}
+
+// ── 자동 로그아웃 (무활동 30분) ───────────────────────
+let _authIdleTimer = null;
+function authStartIdleWatch(){
+  const reset = () => {
+    if(_authIdleTimer) clearTimeout(_authIdleTimer);
+    authMarkActive();
+    _authIdleTimer = setTimeout(() => {
+      authClearSession();
+      location.reload();
+    }, AUTH.IDLE_TIMEOUT_MS);
+  };
+  ['mousedown','keydown','touchstart','scroll'].forEach(ev => {
+    document.addEventListener(ev, reset, {passive:true});
+  });
+  reset();
+}
+
+// ── 수동 로그아웃 ─────────────────────────────────────
+function authLogout(){
+  authClearSession();
+  firebase.auth().signOut().finally(() => location.reload());
+}
+window.authLogout = authLogout;
+window.authSubmit = authSubmit;
+
+// ── 게이트 초기 진입점 ────────────────────────────────
+// 세션 있으면 바로 익명 인증, 없으면 게이트 표시
+async function authBoot(onSuccess){
+  window.authOnSuccess = onSuccess;
+  if(authCheckSession()){
+    try {
+      await firebase.auth().signInAnonymously();
+      authMarkActive();
+      authStartIdleWatch();
+      onSuccess();
+      return;
+    } catch(e){
+      console.warn('Anonymous auth failed, showing gate:', e);
+      authClearSession();
+    }
+  }
+  authShowGate();
+}
+// authBoot은 DOMContentLoaded에서 호출됨 (아래 메인 초기화 블록)
+window.authBoot = authBoot;
+window.authStartIdleWatch = authStartIdleWatch;
+// ══════════════════════════════════════════════════════
+// 🔐 인증 게이트 끝
+// ══════════════════════════════════════════════════════
+
 
 // ── Firebase 공통 유틸 ────────────────────────────────
 const toArr = val => {
@@ -2384,6 +2708,8 @@ function fbListen(key, callback){
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  // 🔐 인증 게이트 부팅 — 통과해야 아래 초기화 실행됨
+  authBoot(() => {
 
   // ── 로그 (1회 로드) ────────────────────────────────
   _fbDB.ref('gosangpa/logs').once('value', snap => {
@@ -2470,6 +2796,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if(ph) ph.style.display = 'block';
     }
   });
+  }); // ← authBoot 콜백 닫기
 });
 </script>
 <script>
